@@ -1,61 +1,104 @@
 <template>
   <ion-page>
-    <ion-header :translucent="true">
-      <ion-toolbar>
-        <ion-title>Blank</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <ion-content>
+      <!-- Tombol Refresh -->
+      <div class="top-bar">
+        <ion-button class="refresh-button" @click="loadData" :disabled="loading">
+          Refresh
+        </ion-button>
+      </div>
 
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Blank</ion-title>
-        </ion-toolbar>
-      </ion-header>
+      <!-- Loading & error -->
+      <p v-if="loading" class="loading-text">Memuat data...</p>
+      <p v-else-if="error" class="error-text">{{ error }}</p>
 
-      <div id="container">
-        <strong>Ready to create an app?</strong>
-        <p>
-          Start with Ionic
-          <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components"
-            >UI Components</a
-          >
-        </p>
+      <!-- Daftar crypto -->
+      <div v-else class="crypto-list">
+        <div v-for="coin in cryptos" :key="coin.id" class="crypto-card">
+          <div class="col col-rank">
+            <span class="label">Rank</span>
+            <span class="big rank-title">{{ coin.rank }}</span>
+          </div>
+          <div class="col col-name">
+            <span class="label">{{ coin.name }}</span>
+            <span class="big">{{ coin.symbol }}</span>
+          </div>
+          <div class="col col-price">
+            <span class="label">USD</span>
+            <span class="big">{{ coin.price_usd }}</span>
+          </div>
+        </div>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+import { ref, onMounted } from 'vue';
+import { IonPage, IonContent, IonButton } from '@ionic/vue';
+import { getCryptos } from '@/services/coinlore';
+import type { Crypto } from '@/services/coinlore';
+
+const cryptos = ref<Crypto[]>([]);
+const loading = ref(false);
+const error = ref('');
+
+const loadData = async () => {
+  loading.value = true;
+  error.value = '';
+  try {
+    const data = await getCryptos();
+    cryptos.value = data.slice(0, 7); // tampilkan rank 1-7 sesuai contoh soal
+  } catch (e) {
+    error.value = 'Tidak dapat memuat data. Periksa koneksi internet.';
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(loadData);
 </script>
 
 <style scoped>
-#container {
+.top-bar {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0 12px;
+  background: #fff;
+}
+.refresh-button {
+  --background: #0a58d6;
+  --border-radius: 6px;
+  text-transform: none;
+}
+ion-content {
+  --background: #ffffff;
+}
+.loading-text,
+.error-text {
   text-align: center;
-
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  margin-top: 30px;
 }
+.loading-text { color: #666; }
+.error-text { color: #d33; }
 
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+.crypto-list {
+  border-top: 1px solid #e0c96a;
 }
-
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-
-  color: #8c8c8c;
-
-  margin: 0;
+.crypto-card {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1.8fr;
+  align-items: center;
+  padding: 8px 12px;
+  background: #fff0cc;
+  border-bottom: 1px solid #e0c96a;
+  color: #000;
 }
-
-#container a {
-  text-decoration: none;
+.col {
+  display: flex;
+  flex-direction: column;
 }
+.col-rank { align-items: center; }
+.label { font-size: 11px; }
+.big { font-size: 20px; }
 </style>
